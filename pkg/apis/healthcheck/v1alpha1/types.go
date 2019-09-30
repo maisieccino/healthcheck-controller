@@ -23,6 +23,7 @@ type HealthCheckSpec struct {
 
 // HealthCheckStatus defines the status object of a HealthCheck resource.
 type HealthCheckStatus struct {
+	Healthy bool `json:"healthy"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
@@ -31,4 +32,6 @@ type HealthCheckStatus struct {
 type HealthCheckList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata"`
+
+	Items []HealthCheck `json:"items"`
 }
