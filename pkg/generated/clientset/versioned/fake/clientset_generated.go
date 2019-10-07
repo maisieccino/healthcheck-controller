@@ -4,8 +4,8 @@ package fake
 
 import (
 	clientset "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned"
-	healthcheckv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned/typed/healthcheck/v1alpha1"
-	fakehealthcheckv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned/typed/healthcheck/v1alpha1/fake"
+	healthv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned/typed/health/v1alpha1"
+	fakehealthv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned/typed/health/v1alpha1/fake"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/discovery"
@@ -60,7 +60,7 @@ func (c *Clientset) Tracker() testing.ObjectTracker {
 
 var _ clientset.Interface = &Clientset{}
 
-// HealthcheckV1alpha1 retrieves the HealthcheckV1alpha1Client
-func (c *Clientset) HealthcheckV1alpha1() healthcheckv1alpha1.HealthcheckV1alpha1Interface {
-	return &fakehealthcheckv1alpha1.FakeHealthcheckV1alpha1{Fake: &c.Fake}
+// HealthV1alpha1 retrieves the HealthV1alpha1Client
+func (c *Clientset) HealthV1alpha1() healthv1alpha1.HealthV1alpha1Interface {
+	return &fakehealthv1alpha1.FakeHealthV1alpha1{Fake: &c.Fake}
 }

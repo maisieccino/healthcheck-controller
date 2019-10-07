@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/mbellgb/healthcheck-controller/internal/pkg/signals"
+	clientset "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -31,6 +32,11 @@ func main() {
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		klog.Fatalf("Error building kubernetes clientset: %s", err.Error())
+	}
+
+	healthClient, err := clientset.NewForConfig(cfg)
+	if err != nil {
+		klog.Fatalf("Error building health client: %s", err.Error())
 	}
 
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeclient, time.Second*30)

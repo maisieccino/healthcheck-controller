@@ -8,7 +8,7 @@ import (
 	time "time"
 
 	versioned "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned"
-	healthcheck "github.com/mbellgb/healthcheck-controller/pkg/generated/informers/externalversions/healthcheck"
+	health "github.com/mbellgb/healthcheck-controller/pkg/generated/informers/externalversions/health"
 	internalinterfaces "github.com/mbellgb/healthcheck-controller/pkg/generated/informers/externalversions/internalinterfaces"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
@@ -156,9 +156,9 @@ type SharedInformerFactory interface {
 	ForResource(resource schema.GroupVersionResource) (GenericInformer, error)
 	WaitForCacheSync(stopCh <-chan struct{}) map[reflect.Type]bool
 
-	Healthcheck() healthcheck.Interface
+	Health() health.Interface
 }
 
-func (f *sharedInformerFactory) Healthcheck() healthcheck.Interface {
-	return healthcheck.New(f, f.namespace, f.tweakListOptions)
+func (f *sharedInformerFactory) Health() health.Interface {
+	return health.New(f, f.namespace, f.tweakListOptions)
 }

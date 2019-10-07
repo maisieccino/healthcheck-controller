@@ -3,7 +3,7 @@
 package fake
 
 import (
-	healthcheckv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/apis/healthcheck/v1alpha1"
+	healthv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/apis/health/v1alpha1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
@@ -15,7 +15,7 @@ var scheme = runtime.NewScheme()
 var codecs = serializer.NewCodecFactory(scheme)
 var parameterCodec = runtime.NewParameterCodec(scheme)
 var localSchemeBuilder = runtime.SchemeBuilder{
-	healthcheckv1alpha1.AddToScheme,
+	healthv1alpha1.AddToScheme,
 }
 
 // AddToScheme adds all types of this clientset into the given scheme. This allows composition
