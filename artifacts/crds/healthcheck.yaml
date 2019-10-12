@@ -1,0 +1,16 @@
+kind: CustomResourceDefinition
+apiVersion: apiextensions.k8s.io/v1beta1
+metadata:
+  name: healthchecks.health.mbell.dev
+spec:
+  group: health.mbell.dev
+  version: v1alpha1
+  names:
+    kind: HealthCheck
+    plural: healthchecks
+  scope: Namespaced
+  validation:
+    openAPIV3Schema:
+      properties:
+        spec:
+          properties:

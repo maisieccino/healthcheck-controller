@@ -4,8 +4,10 @@ import (
 	"flag"
 	"time"
 
+	healthcontroller "github.com/mbellgb/healthcheck-controller/internal/pkg/controller"
 	"github.com/mbellgb/healthcheck-controller/internal/pkg/signals"
 	clientset "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned"
+	healthinformers "github.com/mbellgb/healthcheck-controller/pkg/generated/informers/externalversions"
 	kubeinformers "k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -39,9 +41,22 @@ func main() {
 		klog.Fatalf("Error building health client: %s", err.Error())
 	}
 
-	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeclient, time.Second*30)
+	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
+	healthInformerFactory := healthinformers.NewSharedInformerFactory(healthClient, time.Second*30)
+
+	controller := healthcontroller.NewController(
+		kubeClient,
+		healthClient,
+		kubeInformerFactory.Batch().V1beta1().CronJobs(),
+		healthInformerFactory.Health().V1alpha1().HealthChecks(),
+	)
 
 	kubeInformerFactory.Start(stopCh)
+	healthInformerFactory.Start(stopCh)
+
+	if err = controller.Run(2, stopCh); err != nil {
+		klog.Fatalf("Error starting controller: %s\n", err.Error())
+	}
 }
 
 func init() {

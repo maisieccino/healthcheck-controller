@@ -1,0 +1,12 @@
+module github.com/mbellgb/healthcheck-controller
+
+go 1.12
+
+require (
+	k8s.io/api kubernetes-1.14.7
+	k8s.io/apimachinery kubernetes-1.14.7
+	k8s.io/client-go kubernetes-1.14.7
+	k8s.io/code-generator kubernetes-1.14.7
+	k8s.io/klog v1.0.0
+)
+
