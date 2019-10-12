@@ -1,6 +1,13 @@
 package controller
 
 import (
+	"fmt"
+
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	healthv1alpha1 "github.com/mbellgb/healthcheck-controller/pkg/apis/health/v1alpha1"
+
 	clientset "github.com/mbellgb/healthcheck-controller/pkg/generated/clientset/versioned"
 	informers "github.com/mbellgb/healthcheck-controller/pkg/generated/informers/externalversions/health/v1alpha1"
 	listers "github.com/mbellgb/healthcheck-controller/pkg/generated/listers/health/v1alpha1"
@@ -80,11 +87,41 @@ func NewController(
 	}
 
 	klog.Info("Setting up event handlers")
-	// TODO: Add event handlers for healthcheck objects
-	healthcheckInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{})
+	healthcheckInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: controller.enqueueHealthCheck,
+		UpdateFunc: func(old, new interface{}) {
+			controller.enqueueHealthCheck(new)
+		},
+		DeleteFunc: controller.deleteCronJob,
+	})
+	// TODO: Add event handlers for cronjob resources.
 	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{})
 
 	return controller
+}
+
+func (c *Controller) deleteCronJob(obj interface{}) {
+	var (
+		hc healthv1alpha1.HealthCheck
+		ok bool
+	)
+	if hc, ok = obj.(healthv1alpha1.HealthCheck); !ok {
+		utilruntime.HandleError(fmt.Errorf("could not decode object into HealthCheck"))
+		return
+	}
+
+	// Find matching CronJob if any.
+	cronjob, err := c.cronjobsLister.CronJobs(hc.GetNamespace()).Get(hc.Status.CronJobName)
+	if errors.IsNotFound(err) {
+		// "My work here is done."
+		// "But you didn't do anything!"
+		// "Oh, didn't I?"
+		return
+	}
+
+	if err := c.kubeclientset.BatchV1beta1().CronJobs(cronjob.GetNamespace()).Delete(cronjob.GetName(), &metav1.DeleteOptions{}); err != nil {
+		utilruntime.HandleError(err)
+	}
 }
 
 // Run will set up the event handlers for types we are interested in, as well
@@ -92,5 +129,74 @@ func NewController(
 // is closed, at which point it will shutdown the workqueue and wait for
 // workers to finish processing their current work items.
 func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
+	defer utilruntime.HandleCrash()
+	defer c.workqueue.ShutDown()
+
+	klog.Info("Starting HealthCheck controller")
+
+	klog.Info("Waiting for caches to sync")
+	if ok := cache.WaitForCacheSync(stopCh, c.cronjobsSynced, c.healthchecksSynced); !ok {
+		return fmt.Errorf("failed to wait for caches to sync")
+	}
+
+	klog.Info("Starting workers")
+	for i := 0; i < threadiness; i++ {
+		// run worker
+	}
+
+	klog.Info("Started workers")
+	<-stopCh
+	klog.Info("Killing workers")
+
 	return nil
+}
+
+func (c *Controller) processNextWorkItem() bool {
+	obj, shutdown := c.workqueue.Get()
+
+	if shutdown {
+		return false
+	}
+
+	// Work closure
+	err := func(obj interface{}) error {
+		defer c.workqueue.Done(obj)
+		var (
+			key string
+			ok  bool
+		)
+
+		if key, ok = obj.(string); !ok {
+			c.workqueue.Forget(obj)
+			utilruntime.HandleError(fmt.Errorf("expected string in workqueue but got %#v", obj))
+		}
+
+		if err := c.syncHandler(key); err != nil {
+			c.workqueue.AddRateLimited(key)
+			return fmt.Errorf("error syncing '%s': %s, requeuing", key, err.Error())
+		}
+
+		c.workqueue.Forget(obj)
+		klog.Infof("Successfully synced '%s'", key)
+		return nil
+	}(obj)
+
+	if err != nil {
+		utilruntime.HandleError(err)
+	}
+
+	return true
+}
+
+func (c *Controller) enqueueHealthCheck(obj interface{}) {
+	var (
+		key string
+		err error
+	)
+
+	if key, err = cache.MetaNamespaceKeyFunc(obj); err != nil {
+		utilruntime.HandleError(err)
+		return
+	}
+	c.workqueue.Add(key)
 }

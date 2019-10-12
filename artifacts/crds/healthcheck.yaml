@@ -14,3 +14,13 @@ spec:
       properties:
         spec:
           properties:
+            image:
+              type: string
+            # Should be a period of time (eg `3d` for 3 days), or cron expression
+            frequency:
+              type: string
+              # pattern: "(\d+[wdhms]|)"
+            args:
+              type: array
+              items:
+                type: string
