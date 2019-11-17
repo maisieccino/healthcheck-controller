@@ -2,6 +2,9 @@ package controller
 
 import (
 	"fmt"
+	"time"
+
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,6 +110,7 @@ func (c *Controller) deleteCronJob(obj interface{}) {
 	)
 	if hc, ok = obj.(healthv1alpha1.HealthCheck); !ok {
 		utilruntime.HandleError(fmt.Errorf("could not decode object into HealthCheck"))
+		fmt.Println(obj)
 		return
 	}
 
@@ -142,6 +146,7 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	klog.Info("Starting workers")
 	for i := 0; i < threadiness; i++ {
 		// run worker
+		go wait.Until(c.runWorker, time.Second, stopCh)
 	}
 
 	klog.Info("Started workers")
@@ -149,6 +154,11 @@ func (c *Controller) Run(threadiness int, stopCh <-chan struct{}) error {
 	klog.Info("Killing workers")
 
 	return nil
+}
+
+func (c *Controller) runWorker() {
+	for c.processNextWorkItem() {
+	}
 }
 
 func (c *Controller) processNextWorkItem() bool {

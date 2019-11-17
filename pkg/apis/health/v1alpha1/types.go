@@ -18,17 +18,18 @@ type HealthCheck struct {
 
 // HealthCheckSpec defines the specification of a HealthCheck resource.
 type HealthCheckSpec struct {
-	Image     string   `json:"image"`
-	Frequency string   `json:"frequency"`
-	Args      []string `json:"args"`
+	Image       string   `json:"image"`
+	Frequency   string   `json:"frequency,omitempty"`
+	CronPattern string   `json:"cronPattern,omitempty"`
+	Args        []string `json:"args,omitempty"`
 }
 
 // HealthCheckStatus defines the status object of a HealthCheck resource.
 type HealthCheckStatus struct {
-	CronJobName        string  `json:"cronJobName"`
-	Healthy            bool    `json:"healthy"`
-	Last10             []bool  `json:"last10"`
-	AverageHealthiness float32 `json:"averageHealthiness"`
+	CronJobName        string  `json:"cronJobName,omitempty"`
+	Healthy            bool    `json:"healthy,omitempty"`
+	Last10             []bool  `json:"last10,omitempty"`
+	AverageHealthiness float32 `json:"averageHealthiness,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

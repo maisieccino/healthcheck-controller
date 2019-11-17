@@ -13,14 +13,45 @@ spec:
     openAPIV3Schema:
       properties:
         spec:
+          oneOf:
+            - required:
+              - frequency
+            - required:
+              - cronPattern
           properties:
-            image:
-              type: string
-            # Should be a period of time (eg `3d` for 3 days), or cron expression
             frequency:
+              description: How often to run the check. Should be a period of time (eg `3d` for 3 days), or cron expression
+              example: 30s
               type: string
               # pattern: "(\d+[wdhms]|)"
+            cronPattern:
+              description: Frequency to run the health check, in Cron format.
+              example: "* * * * 0"
+              type: string
+            image:
+              description: Container image used for the health check.
+              type: string
             args:
+              description: Arguments to pass to the image.
               type: array
               items:
                 type: string
+        status:
+          properties:
+            cronJobName:
+              type: string
+              description: The name of the CronJob managed by this HealthCheck.
+            healthy:
+              type: boolean
+              description: True if the service is currently healthy.
+            last10:
+              type: array
+              items:
+                type: bool
+              minItems: 0
+              maxItems: 10
+              description: Last 10 results, in reverse chronological order.
+            averageHealthiness:
+              type: number
+              format: decimal
+              description: Average rate of successful checks, over last 10 checks.

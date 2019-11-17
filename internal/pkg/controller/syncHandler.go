@@ -100,19 +100,18 @@ func newCronJob(hc *healthv1alpha1.HealthCheck, name string) *batchv1beta1.CronJ
 			SuccessfulJobsHistoryLimit: int32Ptr(10),
 			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
 			StartingDeadlineSeconds:    int64Ptr(10),
-			Schedule:                   hc.Spec.Frequency,
-			Suspend:                    boolPtr(false),
+			Schedule:                   "*/1 * * * *",
+			// Schedule:                   hc.Spec.Frequency,
+			Suspend: boolPtr(false),
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					BackoffLimit: int32Ptr(0),
-					Selector: &metav1.LabelSelector{
-						MatchLabels: labels,
-					},
 					Template: corev1.PodTemplateSpec{
 						ObjectMeta: metav1.ObjectMeta{
 							Labels: labels,
 						},
 						Spec: corev1.PodSpec{
+							RestartPolicy: corev1.RestartPolicyNever,
 							Containers: []corev1.Container{
 								{
 									Name:  "healthcheck",
