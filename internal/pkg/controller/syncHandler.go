@@ -17,6 +17,10 @@ import (
 	"k8s.io/client-go/tools/cache"
 )
 
+const (
+	defaultCronPattern = "*/1 * * * *"
+)
+
 func (c *Controller) syncHandler(key string) error {
 	namespace, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
@@ -87,6 +91,12 @@ func newCronJob(hc *healthv1alpha1.HealthCheck, name string) *batchv1beta1.CronJ
 	labels := map[string]string{
 		"controller": hc.GetName(),
 	}
+
+	schedule := defaultCronPattern
+	if len(hc.Spec.CronPattern) > 0 {
+		schedule = hc.Spec.CronPattern
+	}
+
 	return &batchv1beta1.CronJob{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
@@ -100,9 +110,8 @@ func newCronJob(hc *healthv1alpha1.HealthCheck, name string) *batchv1beta1.CronJ
 			SuccessfulJobsHistoryLimit: int32Ptr(10),
 			ConcurrencyPolicy:          batchv1beta1.ForbidConcurrent,
 			StartingDeadlineSeconds:    int64Ptr(10),
-			Schedule:                   "*/1 * * * *",
-			// Schedule:                   hc.Spec.Frequency,
-			Suspend: boolPtr(false),
+			Schedule:                   schedule,
+			Suspend:                    boolPtr(false),
 			JobTemplate: batchv1beta1.JobTemplateSpec{
 				Spec: batchv1.JobSpec{
 					BackoffLimit: int32Ptr(0),
