@@ -1,0 +1,47 @@
+apiVersion: health.mbell.dev/v1alpha1
+kind: HealthCheck
+metadata:
+  name: example-check
+spec:
+  frequency: 30s
+  image: curlimages/curl:7.67.0
+  args:
+  - "-i"
+  - "http://example-target.default.svc.cluster.local/"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-target
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-target
+  template:
+    metadata:
+      labels:
+        app: example-target
+    spec:
+      containers:
+      - name: app
+        image: kennethreitz/httpbin
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-target
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    protocol: TCP
+  selector:
+    app: example-target
