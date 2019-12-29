@@ -2,6 +2,7 @@ package controller
 
 import (
 	"fmt"
+	"k8s.io/api/batch/v1beta1"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -93,12 +94,25 @@ func NewController(
 	healthcheckInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.enqueueHealthCheck,
 		UpdateFunc: func(old, new interface{}) {
-			controller.enqueueHealthCheck(new)
+			oldHC := old.(*healthv1alpha1.HealthCheck)
+			newHC := new.(*healthv1alpha1.HealthCheck)
+			if oldHC.ResourceVersion == newHC.ResourceVersion {
+				controller.enqueueHealthCheck(new)
+			}
 		},
 		DeleteFunc: controller.deleteCronJob,
 	})
-	// TODO: Add event handlers for cronjob resources.
-	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{})
+	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: controller.handleObject,
+		UpdateFunc: func(old, new interface{}) {
+			oldCJ := old.(*v1beta1.CronJob)
+			newCJ := new.(*v1beta1.CronJob)
+			if oldCJ.ResourceVersion != newCJ.ResourceVersion {
+				controller.handleObject(new)
+			}
+		},
+		DeleteFunc: controller.handleObject,
+	})
 
 	return controller
 }
