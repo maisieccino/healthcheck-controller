@@ -6,35 +6,62 @@ import (
 	"time"
 )
 
+var (
+	twoMins      = frequencyComponent{Amount: 2, Unit: time.Minute}
+	sixHours     = frequencyComponent{Amount: 6, Unit: time.Hour}
+	fivehalfDays = frequencyComponent{Amount: 5.5, Unit: time.Hour * 24}
+)
+
 type testCase struct {
 	t            *testing.T
 	input        string
-	expectedFreq Frequency
+	expectedFreq *Frequency
 	expectedErr  error
 }
 
 func (tc testCase) test(id int) {
 	freq, err := ParseFrequency(tc.input)
-	if err != nil {
-		tc.t.Errorf("Test case %d failed, error: %v\n", id, err)
+	if err != tc.expectedErr {
+		if tc.expectedErr != nil {
+			tc.t.Errorf("Test case %d failed, expected error %s\n", id, tc.expectedErr.Error())
+		} else {
+			tc.t.Errorf("Test case %d failed, unexpected error %v\n", id, err)
+		}
+		return
 	}
 	for i, comp := range freq.components {
 		if len(tc.expectedFreq.components) < i+1 {
 			tc.t.Errorf("Test case %d failed, %d unexpected components: %+v", id, len(freq.components)-len(tc.expectedFreq.components), freq.components[i:])
-			break
+			return
 		}
 		expectedComp := tc.expectedFreq.components[i]
 		if err := checkComponent(tc.t, expectedComp, comp); err != nil {
 			tc.t.Errorf("Test case %d failed: %v\n", id, err)
+			return
 		}
 	}
-	if len(tc.expectedFreq.components) > len(freq.components) {
-		tc.t.Errorf("Test case %d failed, %d expected additional components: %+v", id, len(tc.expectedFreq.components)-len(freq.components), tc.expectedFreq.components[len(freq.components):])
+	diff := len(tc.expectedFreq.components) - len(freq.components)
+	if diff > 0 {
+		tc.t.Errorf("Test case %d failed, %d expected additional components: %+v", id, diff, tc.expectedFreq.components[len(freq.components):])
 	}
 }
 
 var tt = []testCase{
-	testCase{input: "2m", expectedErr: nil, expectedFreq: Frequency{components: []frequencyComponent{{Unit: time.Minute, Amount: 2}}}},
+	testCase{
+		input:        "2m",
+		expectedErr:  nil,
+		expectedFreq: &Frequency{components: []frequencyComponent{twoMins}},
+	},
+	testCase{
+		input:        "6h",
+		expectedErr:  nil,
+		expectedFreq: &Frequency{components: []frequencyComponent{sixHours}},
+	},
+	testCase{
+		input:        "6hours",
+		expectedErr:  errInvalidExpr("6hours"),
+		expectedFreq: nil,
+	},
 }
 
 func TestFrequency(t *testing.T) {

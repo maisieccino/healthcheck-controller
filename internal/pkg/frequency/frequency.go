@@ -1,7 +1,16 @@
 package frequency
 
 import (
+	"strings"
 	"time"
+)
+
+const (
+	second = "s"
+	minute = "m"
+	hour   = "h"
+	day    = "d"
+	week   = "w"
 )
 
 // Frequency represents a frequency to reapeat things.
@@ -24,6 +33,7 @@ func (f Frequency) ToDuration() time.Duration {
 // ParseFrequency will take a frequency expression string and parse it to a
 // frequency object.
 func ParseFrequency(expr string) (Frequency, error) {
+	lowered := strings.ToLower(expr)
 	return Frequency{
 		components: []frequencyComponent{},
 	}, nil
