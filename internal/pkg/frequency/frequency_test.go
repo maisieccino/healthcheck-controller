@@ -29,6 +29,9 @@ func (tc testCase) test(id int) {
 		}
 		return
 	}
+	if err != nil {
+		return
+	}
 	for i, comp := range freq.components {
 		if len(tc.expectedFreq.components) < i+1 {
 			tc.t.Errorf("Test case %d failed, %d unexpected components: %+v", id, len(freq.components)-len(tc.expectedFreq.components), freq.components[i:])
