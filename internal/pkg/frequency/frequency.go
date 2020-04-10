@@ -15,10 +15,9 @@ const (
 )
 
 var (
-	frequencyStringPattern = regexp.MustCompile(`/(\d+(.\d+)?[smhdw])+`)
+	frequencyStringPattern = regexp.MustCompile(`(\d+(.\d+)?[smhdw])+`)
 )
 
-// Frequency represents a frequency to reapeat things.
 type Frequency struct {
 	components []frequencyComponent
 	cronExpr   string
@@ -46,9 +45,10 @@ func (f Frequency) ToDuration() time.Duration {
 // frequency object.
 func ParseFrequency(expr string) (Frequency, error) {
 	lowered := strings.ToLower(expr)
-	if isValid := frequencyStringPattern.Match([]byte(lowered)); !isValid {
+	if isValid := frequencyStringPattern.MatchString(lowered); !isValid {
 		return EmptyFrequency(), errInvalidExpr(expr)
 	}
+	frequencyStringPattern.FindAllString(lowered, -1)
 	return Frequency{
 		components: []frequencyComponent{},
 	}, nil
