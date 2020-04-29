@@ -22,31 +22,32 @@ type testCase struct {
 
 func (tc testCase) test() {
 	freq, err := ParseFrequency(tc.input)
-	if err != tc.expectedErr {
-		if tc.expectedErr != nil {
-			tc.t.Errorf("Test case %s failed, expected error %s\n", tc.name, tc.expectedErr.Error())
-		} else {
-			tc.t.Errorf("Test case %s failed, unexpected error %v\n", tc.name, err)
-		}
-		return
-	}
 	if err != nil {
+		if tc.expectedErr != nil {
+			if tc.expectedErr == err {
+				return
+			} else {
+				tc.t.Errorf("expected error %s, actual error %s\n", tc.expectedErr.Error(), err.Error())
+				return
+			}
+		}
+		tc.t.Errorf("unexpected error %v\n", err)
 		return
 	}
 	for i, comp := range freq.components {
 		if len(tc.expectedFreq.components) < i+1 {
-			tc.t.Errorf("Test case %s failed, %d unexpected components: %+v", tc.name, len(freq.components)-len(tc.expectedFreq.components), freq.components[i:])
+			tc.t.Errorf("%d unexpected components: %+v", len(freq.components)-len(tc.expectedFreq.components), freq.components[i:])
 			return
 		}
 		expectedComp := tc.expectedFreq.components[i]
 		if err := checkComponent(tc.t, expectedComp, comp); err != nil {
-			tc.t.Errorf("Test case %s failed: %v\n", tc.name, err)
+			tc.t.Errorf("%v\n", err)
 			return
 		}
 	}
 	diff := len(tc.expectedFreq.components) - len(freq.components)
 	if diff > 0 {
-		tc.t.Errorf("Test case %s failed, %d expected additional components: %+v", tc.name, diff, tc.expectedFreq.components[len(freq.components):])
+		tc.t.Errorf("%d expected additional components: %+v", diff, tc.expectedFreq.components[len(freq.components):])
 	}
 }
 
@@ -97,8 +98,10 @@ var tt = []testCase{
 
 func TestFrequency(t *testing.T) {
 	for _, tc := range tt {
-		tc.t = t
-		tc.test()
+		t.Run(tc.name, func(t *testing.T) {
+			tc.t = t
+			tc.test()
+		})
 	}
 }
 

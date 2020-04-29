@@ -2,20 +2,25 @@ package frequency
 
 import (
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	second = "s"
-	minute = "m"
-	hour   = "h"
-	day    = "d"
-	week   = "w"
+	second   = "s"
+	minute   = "m"
+	hour     = "h"
+	day      = "d"
+	week     = "w"
+	dayUnit  = time.Hour * 24
+	weekUnit = dayUnit * 7
 )
 
 var (
-	frequencyStringPattern = regexp.MustCompile(`(\d+(.\d+)?[smhdw])+`)
+	frequencyToken         = `(\d+(\.\d+)?[smhdw])`
+	frequencyTokenPattern  = regexp.MustCompile(frequencyToken)
+	frequencyStringPattern = regexp.MustCompile(frequencyToken + "+$")
 )
 
 type Frequency struct {
@@ -48,9 +53,47 @@ func ParseFrequency(expr string) (Frequency, error) {
 	if isValid := frequencyStringPattern.MatchString(lowered); !isValid {
 		return EmptyFrequency(), errInvalidExpr(expr)
 	}
-	frequencyStringPattern.FindAllString(lowered, -1)
+	frequencyTokens := frequencyTokenPattern.FindAllString(lowered, -1)
+
+	components := make([]frequencyComponent, 0)
+	highestUnit := time.Hour * 6000
+	for _, token := range frequencyTokens {
+		length := len(token)
+		unitStr := string(token[length-1])
+		amount, err := strconv.ParseFloat(token[0:length-1], 32)
+		if err != nil {
+			return EmptyFrequency(), errParsingToken(token)
+		}
+		var unit time.Duration
+		switch unitStr {
+		case week:
+			unit = weekUnit
+			break
+		case day:
+			unit = dayUnit
+			break
+		case hour:
+			unit = time.Hour
+			break
+		case minute:
+			unit = time.Minute
+			break
+		case second:
+			unit = time.Second
+			break
+		}
+		if unit > highestUnit {
+			return EmptyFrequency(), errWrongOrder(expr)
+		}
+		highestUnit = unit
+		newComponent := frequencyComponent{
+			Unit:   unit,
+			Amount: float32(amount),
+		}
+		components = append(components, newComponent)
+	}
 	return Frequency{
-		components: []frequencyComponent{},
+		components: components,
 	}, nil
 }
 
