@@ -18,6 +18,7 @@ jobs:
       - name: Set GOPATH
         run: |
           echo "${GOPATH}"
+          echo "::set-env name=GOPATH::${HOME}"
       - name: Lint
         run: |
           go vet -v ./...
