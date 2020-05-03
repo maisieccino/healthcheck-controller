@@ -23,4 +23,5 @@ jobs:
           go test -v ./...
       - name: Verify codegen up to date
         run: |
+          go mod vendor
           ./hack/verify-codegen.sh
