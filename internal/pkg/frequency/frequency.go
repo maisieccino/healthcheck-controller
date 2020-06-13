@@ -42,8 +42,11 @@ func (f Frequency) ToCronExpr() string {
 }
 
 // ToDuration returns the length of time the frequency represents.
-func (f Frequency) ToDuration() time.Duration {
-	return 0
+func (f Frequency) ToDuration() (total time.Duration) {
+	for _, cmpt := range f.components {
+		total += cmpt.Unit * time.Duration(cmpt.Amount)
+	}
+	return
 }
 
 // ParseFrequency will take a frequency expression string and parse it to a

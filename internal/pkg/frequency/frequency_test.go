@@ -13,11 +13,12 @@ var (
 )
 
 type testCase struct {
-	t            *testing.T
-	name         string
-	input        string
-	expectedFreq *Frequency
-	expectedErr  error
+	t                *testing.T
+	name             string
+	input            string
+	expectedFreq     *Frequency
+	expectedErr      error
+	expectedDuration time.Duration
 }
 
 func (tc testCase) test() {
@@ -26,10 +27,9 @@ func (tc testCase) test() {
 		if tc.expectedErr != nil {
 			if tc.expectedErr == err {
 				return
-			} else {
-				tc.t.Errorf("expected error %s, actual error %s\n", tc.expectedErr.Error(), err.Error())
-				return
 			}
+			tc.t.Errorf("expected error %s, actual error %s\n", tc.expectedErr.Error(), err.Error())
+			return
 		}
 		tc.t.Errorf("unexpected error %v\n", err)
 		return
@@ -53,16 +53,18 @@ func (tc testCase) test() {
 
 var tt = []testCase{
 	{
-		name:         "twominutes_correct_format",
-		input:        "2m",
-		expectedErr:  nil,
-		expectedFreq: &Frequency{components: []frequencyComponent{twoMins}},
+		name:             "twominutes_correct_format",
+		input:            "2m",
+		expectedErr:      nil,
+		expectedFreq:     &Frequency{components: []frequencyComponent{twoMins}},
+		expectedDuration: 2 * time.Minute,
 	},
 	{
-		name:         "sixhours_correct_format",
-		input:        "6h",
-		expectedErr:  nil,
-		expectedFreq: &Frequency{components: []frequencyComponent{sixHours}},
+		name:             "sixhours_correct_format",
+		input:            "6h",
+		expectedErr:      nil,
+		expectedFreq:     &Frequency{components: []frequencyComponent{sixHours}},
+		expectedDuration: 6 * time.Hour,
 	},
 	{
 		name:         "sixhours_incorrect_format",
@@ -71,10 +73,11 @@ var tt = []testCase{
 		expectedFreq: nil,
 	},
 	{
-		name:         "sixhourstwominutes_correct_format",
-		input:        "6h2m",
-		expectedErr:  nil,
-		expectedFreq: &Frequency{components: []frequencyComponent{sixHours, twoMins}},
+		name:             "sixhourstwominutes_correct_format",
+		input:            "6h2m",
+		expectedErr:      nil,
+		expectedFreq:     &Frequency{components: []frequencyComponent{sixHours, twoMins}},
+		expectedDuration: (6 * time.Hour) + (2 * time.Minute),
 	},
 	{
 		name:         "sixhourstwominutes_incorrect_format",
@@ -89,16 +92,19 @@ var tt = []testCase{
 		expectedFreq: &Frequency{components: []frequencyComponent{sixHours, twoMins}},
 	},
 	{
-		name:         "fivehalfdays_correct_format",
-		input:        "5.5d",
-		expectedFreq: &Frequency{components: []frequencyComponent{fivehalfDays}},
-		expectedErr:  nil,
+		name:             "fivehalfdays_correct_format",
+		input:            "5.5d",
+		expectedFreq:     &Frequency{components: []frequencyComponent{fivehalfDays}},
+		expectedErr:      nil,
+		expectedDuration: 5.5 * 24 * time.Hour,
 	},
 }
 
 func TestFrequency(t *testing.T) {
 	for _, tc := range tt {
+		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			tc.t = t
 			tc.test()
 		})
