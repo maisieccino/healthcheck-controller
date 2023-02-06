@@ -3,12 +3,12 @@ module github.com/mbellgb/healthcheck-controller
 go 1.12
 
 require (
-	k8s.io/api v0.17.5
-	k8s.io/apimachinery v0.17.5
-	k8s.io/client-go v0.17.5
+	k8s.io/api v0.20.0
+	k8s.io/apimachinery v0.20.0
+	k8s.io/client-go v0.20.0
 	k8s.io/code-generator v0.17.5
 	k8s.io/klog v1.0.0
-	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
+	k8s.io/utils v0.0.0-20201110183641-67b214c5f920
 )
 
 replace (
